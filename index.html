@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Mapa embebido con Leaflet | Juan Castaño</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css"
+        integrity="sha512-hoalWLoI8r4UszCkZ5kL8vayOGVae1oxXe/2A4AO6J9+580uKHDO3JdHb7NzwwzK5xr/Fs0W40kiNHxM9vyTtQ=="
+        crossorigin="" />
+    <link
+        href='https://fonts.googleapis.com/css?family=Roboto:400,100,100italic,300,300italic,400italic,500,500italic,700,700italic,900italic,900'
+        rel='stylesheet' type='text/css' />
+    <link rel="icon" type="image/x-icon" href="https://cdn-icons-png.flaticon.com/512/235/235861.png">
+
+    <!--Estilos-->
+    <style>
+        body {
+            font-family: 'Roboto', 'helvetica';
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .geojson,
+        .input {
+            display: flex;
+            margin: 25px 0;
+        }
+
+        p,
+        h4 {
+            margin: 0;
+        }
+
+        .container {
+            margin: 20px 0;
+        }
+
+        .deafultButtons :first-child {
+            display: block;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container" class="container">
+        <h1>Mapa embebido con Leaflet | Juan Castaño</h1>
+        <div id="inputs" class="input">
+            <h4>Agregar coordenadas manualmente:&nbsp;</h4><label>Latitud <input type="number" id="latitud"
+                    name="latitud" /></label>&nbsp;&nbsp;
+            <label>Longitud
+                <input type="number" id="longitud" name="longitud" /></label>&nbsp;&nbsp;&nbsp;
+            <button type="submit" onclick="saveValues()">Georeferenciar</button>
+        </div>
+
+        <div id="geojson" class="geojson">
+            <h4>Cargar texto en formato de estandar GeoJson:&nbsp;</h4><textarea type="text" id="usergeojson"
+                name="usergeojson" rows="1" cols="50"></textarea>&nbsp;&nbsp;&nbsp;
+            <button type="submit" onclick="saveGeoJSON()">Cargar</button>
+        </div>
+        <div id="deafultButtons" class="deafultButtons">
+            <button type="submit" onclick="reCenter()">Volver a coordenadas originales</button>
+            <button type="submit" onclick="defaultGeoJSON()">GeoJSON de ejemplo</button> <button type="submit"
+                onclick="removeMarkers()">Borrar capas de GeoJSON</button>
+        </div>
+    </div>
+    <div id="map" style="width: 1280px; height: 600px"></div>
+
+    <!--Funciones personalizadas-->
+    <script>
+        //Función encargarda de georeferenciar coordenadas escritas por el usuario-->
+        function saveValues() {
+            var latitud = document.getElementById("latitud").value;
+            var longitud = document.getElementById("longitud").value;
+            map.setView([latitud, longitud], 16);
+            var marker = new L.Marker([latitud, longitud]);
+            marker.addTo(map);
+            marker.bindPopup(latitud + " lat, " + longitud + " long").openPopup()
+        }
+
+        //Función encargarda de volver a cetrar coordenadas originales
+        function reCenter() {
+            map.setView([4.632611, -74.065456], 18);
+            var marker = new L.Marker([4.632611, -74.065456]);
+        }
+
+        //Función encargarda cargar GeoJSON del usuario-->
+        function saveGeoJSON() {
+            var userGeoJSON = JSON.parse(document.getElementById("usergeojson").value);
+            console.log(userGeoJSON);
+            var myGeoJSON = L.geoJSON(userGeoJSON, {
+                onEachFeature: function (feature, layer) {
+                    layer.myTag = "myGeoJSON"
+                }
+            });
+            myGeoJSON.addTo(map)
+        }
+
+        //Función encargarda de cargar GeoJSON por defecto-->
+        function defaultGeoJSON() {
+            var defaultGeoJSON = { "type": "FeatureCollection", "features": [{ "type": "Feature", "geometry": { "type": "LineString", "coordinates": [[-74.0802682, 4.63490749], [-74.07980457, 4.63480021], [-74.07985976, 4.63443987], [-74.07927194, 4.63467643], [-74.07833639, 4.63448663], [-74.07832259, 4.6345609], [-74.06665521, 4.63241698], [-74.06629725, 4.63225704], [-74.06624171, 4.63263843], [-74.0654394, 4.63246619], [-74.0653962, 4.6327184]] }, "id": "239b84c9-5687-4323-b16e-62c06b8076ba", "properties": { "name": "" } }, { "type": "Feature", "geometry": { "type": "LineString", "coordinates": [[-74.0653962, 4.6327184], [-74.06544311, 4.63272933]] }, "id": "c4149102-5c25-45df-bbec-453c2b16b6f1", "properties": { "name": "" } }, { "type": "Feature", "geometry": { "type": "Polygon", "coordinates": [[[-74.0654056, 4.6329178], [-74.06547131, 4.63258763], [-74.06556787, 4.63260501], [-74.06558396, 4.63253817], [-74.06621965, 4.63266249], [-74.0661888, 4.63286433], [-74.06608822, 4.63284695], [-74.06607883, 4.63290042], [-74.06617941, 4.63291245], [-74.06615527, 4.63305816], [-74.0654056, 4.6329178]]] }, "id": "0f87eb38-0d13-4f6b-a483-e416cad9eb20", "properties": { "name": "Universidad piloto" } }] };
+            var myDefaultGeoJSON = L.geoJSON(defaultGeoJSON, {
+                onEachFeature: function (feature, layer) {
+                    layer.myTag = "myGeoJSON"
+                }
+            });
+            myDefaultGeoJSON.addTo(map)
+        }
+
+        //Función encargarda de borrar las capas GeoJSON-->
+        function removeMarkers() {
+            map.eachLayer(function (layer) {
+                if (layer.myTag && layer.myTag === "myGeoJSON") {
+                    map.removeLayer(layer)
+                }
+            });
+        }
+    </script>
+
+    <!--Script de librería leaflet-->
+    <script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js"
+        integrity="sha512-BB3hKbKWOc9Ez/TAwyWxNXeoV9c1v6FIeYiBieIWkpLjauysF18NzgR1MBNBXf8/KABdlkX68nAhlwcDFLGPCQ=="
+        crossorigin=""></script>
+    <script>
+        // Creating map options
+        var mapOptions = {
+            center: [4.632611, -74.065456],
+            zoom: 18
+        }
+
+        // Creating a map object
+        var map = new L.map('map', mapOptions);
+
+        // Creating a Layer object
+        var layer = new L.TileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+
+        // Adding layer to the map
+        map.addLayer(layer);
+
+        var marker = new L.Marker([4.632611, -74.065456]);
+        marker.addTo(map);
+        marker.bindPopup('Universidad Piloto | Punto original').openPopup();
+    </script>
+</body>
+
+</html>
